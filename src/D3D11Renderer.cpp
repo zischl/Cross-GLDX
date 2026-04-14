@@ -5,7 +5,7 @@
 using Microsoft::WRL::ComPtr;
 
 
-void Renderer::GetPresetTexture2d(ComPtr<ID3D11Device> D3D11Device, ComPtr<ID3D11Texture2D>& Out, TexPreset2D Preset, int texWidth, int texHeight) {
+void D3D11Renderer::GetPresetTexture2d(ComPtr<ID3D11Device> D3D11Device, ComPtr<ID3D11Texture2D>& Out, TexPreset2D Preset, int texWidth, int texHeight) {
 	D3D11_TEXTURE2D_DESC desc = {};
 
 	desc.Width = static_cast<UINT>(texWidth);
@@ -57,13 +57,13 @@ void Renderer::GetPresetTexture2d(ComPtr<ID3D11Device> D3D11Device, ComPtr<ID3D1
 }
 
 
-Renderer::Renderer() {
+D3D11Renderer::D3D11Renderer() {
 
 
 };
 
 //Device DeviceStruct = Renderer.CreateD3d11Device(featureLevels, _countof(featureLevels), creationFlags);
-D3DDevice Renderer::CreateD3d11Device(D3D_FEATURE_LEVEL (FeatureLevels)[],UINT FeatureLevelCount, UINT& CreationFlags) {
+D3DDevice D3D11Renderer::CreateD3d11Device(D3D_FEATURE_LEVEL (FeatureLevels)[],UINT FeatureLevelCount, UINT& CreationFlags) {
 	D3DDevice DeviceStruct = {};
 	D3D_FEATURE_LEVEL SelectedFeatureLevel;
 
@@ -83,7 +83,7 @@ D3DDevice Renderer::CreateD3d11Device(D3D_FEATURE_LEVEL (FeatureLevels)[],UINT F
 
 
 
-ComPtr<IDXGIFactory2> Renderer::CreateDXGIFactory2() {
+ComPtr<IDXGIFactory2> D3D11Renderer::CreateDXGIFactory2() {
 	ComPtr<IDXGIFactory> factory = nullptr;
 	ComPtr<IDXGIFactory2> Factory2 = nullptr;
 
@@ -100,7 +100,7 @@ ComPtr<IDXGIFactory2> Renderer::CreateDXGIFactory2() {
 	return Factory2;
 }
 
-ComPtr<IDXGISwapChain3> Renderer::CreateSwapChain(
+ComPtr<IDXGISwapChain3> D3D11Renderer::CreateSwapChain(
 		ID3D11Device* D3D11Device, 
 		HWND& hwnd, 
 		UINT Width, 
@@ -137,7 +137,7 @@ ComPtr<IDXGISwapChain3> Renderer::CreateSwapChain(
 	return SwapChain3;
 }
 
-ComPtr<ID3D11Texture2D> Renderer::GetSwapChainBuffer(IDXGISwapChain3* SwapChain, UINT Buffer) {
+ComPtr<ID3D11Texture2D> D3D11Renderer::GetSwapChainBuffer(IDXGISwapChain3* SwapChain, UINT Buffer) {
 
 	ComPtr<ID3D11Texture2D> mainBuffer;
 	hr = SwapChain->GetBuffer(Buffer, IID_PPV_ARGS(&mainBuffer));
@@ -148,7 +148,7 @@ ComPtr<ID3D11Texture2D> Renderer::GetSwapChainBuffer(IDXGISwapChain3* SwapChain,
 	return mainBuffer;
 }
 
-std::vector<ComPtr<ID3D11Texture2D>> Renderer::GetSwapChainBuffersArray(IDXGISwapChain3* SwapChain, UINT Count) {
+std::vector<ComPtr<ID3D11Texture2D>> D3D11Renderer::GetSwapChainBuffersArray(IDXGISwapChain3* SwapChain, UINT Count) {
 
 	std::vector<ComPtr<ID3D11Texture2D>> SCBArray = {};
 
@@ -164,7 +164,7 @@ std::vector<ComPtr<ID3D11Texture2D>> Renderer::GetSwapChainBuffersArray(IDXGISwa
 	return SCBArray;
 }
 
-ComPtr<ID3D11RenderTargetView> Renderer::CreateRTV(ID3D11Device* D3D11Device, ID3D11Texture2D* targetBuffer) {
+ComPtr<ID3D11RenderTargetView> D3D11Renderer::CreateRTV(ID3D11Device* D3D11Device, ID3D11Texture2D* targetBuffer) {
 	ComPtr<ID3D11RenderTargetView> renderTargetView = nullptr;
 
 	hr = D3D11Device->CreateRenderTargetView(targetBuffer, nullptr, &renderTargetView);
@@ -176,7 +176,7 @@ ComPtr<ID3D11RenderTargetView> Renderer::CreateRTV(ID3D11Device* D3D11Device, ID
 }
 
 //not for dx 11
-std::vector <ComPtr<ID3D11RenderTargetView>> Renderer::CreateRTVArray(ID3D11Device* D3D11Device, IDXGISwapChain3* SwapChain, UINT Count) {
+std::vector <ComPtr<ID3D11RenderTargetView>> D3D11Renderer::CreateRTVArray(ID3D11Device* D3D11Device, IDXGISwapChain3* SwapChain, UINT Count) {
 
 	std::vector<ComPtr<ID3D11RenderTargetView>> RTVArray_cp = {};
 
@@ -205,7 +205,7 @@ std::vector <ComPtr<ID3D11RenderTargetView>> Renderer::CreateRTVArray(ID3D11Devi
 
 
 
-ComPtr<ID3D11PixelShader> Renderer::CreatePixelShader(ID3D11Device* D3D11Device, LPCWSTR FileName) {
+ComPtr<ID3D11PixelShader> D3D11Renderer::CreatePixelShader(ID3D11Device* D3D11Device, LPCWSTR FileName) {
 	
 	ComPtr<ID3DBlob> pixelShaderBlob = nullptr;
 	hr = D3DReadFileToBlob(FileName, &pixelShaderBlob);
@@ -223,9 +223,8 @@ ComPtr<ID3D11PixelShader> Renderer::CreatePixelShader(ID3D11Device* D3D11Device,
 	return pixelShader;
 }
 
-ComPtr<ID3D11VertexShader> Renderer::CreateVertexShader(ID3D11Device* D3D11Device, LPCWSTR FileName, ID3DBlob** VertexShaderBlobTemp) {
+ComPtr<ID3D11VertexShader> D3D11Renderer::CreateVertexShader(ID3D11Device* D3D11Device, LPCWSTR FileName, ID3DBlob** VertexShaderBlobTempParam) {
 	
-
 	D3DReadFileToBlob(FileName, &VertexShaderBlobTemp);
 
 	ComPtr<ID3D11VertexShader> vertexShader;
@@ -235,21 +234,28 @@ ComPtr<ID3D11VertexShader> Renderer::CreateVertexShader(ID3D11Device* D3D11Devic
 		VertexShaderBlobTemp->GetBufferSize(),
 		nullptr, &vertexShader);
 
+	if (VertexShaderBlobTempParam) {
+		*VertexShaderBlobTempParam = VertexShaderBlobTemp.Get();
+		VertexShaderBlobTemp->AddRef();
+	}
+
 	return vertexShader;
 }
 
-ComPtr<ID3D11InputLayout> Renderer::CreateInputLayout(ID3D11Device* D3D11Device, D3D11_INPUT_ELEMENT_DESC* layout, UINT ArraySize) {
+ComPtr<ID3D11InputLayout> D3D11Renderer::CreateInputLayout(ID3D11Device* D3D11Device, D3D11_INPUT_ELEMENT_DESC* layout, UINT ArraySize) {
 
 	ComPtr<ID3D11InputLayout> inputLayout;
 
-	D3D11Device->CreateInputLayout(layout, ArraySize, VertexShaderBlobTemp->GetBufferPointer(),
-		VertexShaderBlobTemp->GetBufferSize(), &inputLayout);
+	if (VertexShaderBlobTemp) {
+		D3D11Device->CreateInputLayout(layout, ArraySize, VertexShaderBlobTemp->GetBufferPointer(),
+			VertexShaderBlobTemp->GetBufferSize(), &inputLayout);
+	}
 
 	return inputLayout;
 }
 
 
-ComPtr<ID3D11Buffer> Renderer::CreateIndexBuffer(ID3D11Device* D3D11Device, const unsigned short(&Indices)[], UINT ArraySize, IndexBufferConfig BufferConfig) {
+ComPtr<ID3D11Buffer> D3D11Renderer::CreateIndexBuffer(ID3D11Device* D3D11Device, const unsigned short(&Indices)[], UINT ArraySize, IndexBufferConfig BufferConfig) {
 	
 	D3D11_BUFFER_DESC indexBufferDesc;
 	indexBufferDesc.ByteWidth = sizeof(unsigned short) * ArraySize;
@@ -272,6 +278,6 @@ ComPtr<ID3D11Buffer> Renderer::CreateIndexBuffer(ID3D11Device* D3D11Device, cons
 
 
 
-void Renderer::SetViewPort(ID3D11DeviceContext* D3D11Context) {
+void D3D11Renderer::SetViewPort(ID3D11DeviceContext* D3D11Context) {
 	
 }

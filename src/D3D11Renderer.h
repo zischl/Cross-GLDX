@@ -76,14 +76,15 @@ struct IndexBufferConfig {
 
 
 
-class Renderer {
+class D3D11Renderer {
 private:
 	HRESULT hr = S_OK;
+	ComPtr<ID3DBlob> VertexShaderBlobTemp = nullptr;
 
 	void GetPresetTexture2d(ComPtr<ID3D11Device> D3D11Device, ComPtr<ID3D11Texture2D>& Out, TexPreset2D Preset, int bufferWidth, int bufferHeight);
 
 public:
-	Renderer();
+	D3D11Renderer();
 
 	void SetViewPort(ID3D11DeviceContext* D3D11Context);
 
