@@ -1,5 +1,5 @@
-#ifndef RENDERER_H
-#define RENDERER_H
+#ifndef D3DRENDERER_H
+#define D3DRENDERER_H
 
 #pragma warning(default : 4710)
 #pragma warning(default : 4711)
@@ -80,7 +80,7 @@ class Renderer {
 private:
 	HRESULT hr = S_OK;
 
-	void _createCustomBuffer(ComPtr<ID3D11Device> D3D11Device, ComPtr<ID3D11Texture2D>& customBuffer, int bufferWidth, int bufferHeight);
+	void GetPresetTexture2d(ComPtr<ID3D11Device> D3D11Device, ComPtr<ID3D11Texture2D>& Out, TexPreset2D Preset, int bufferWidth, int bufferHeight);
 
 public:
 	Renderer();
