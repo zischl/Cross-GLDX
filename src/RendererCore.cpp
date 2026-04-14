@@ -5,20 +5,57 @@
 using Microsoft::WRL::ComPtr;
 
 
-void Renderer::_createCustomBuffer(ComPtr<ID3D11Device> D3D11Device, ComPtr<ID3D11Texture2D>& customBuffer, int bufferWidth, int bufferHeight) {
-	D3D11_TEXTURE2D_DESC customBufferDesc = {};
-	customBufferDesc.Width = static_cast<UINT>(bufferWidth);
-	customBufferDesc.Height = static_cast<UINT>(bufferHeight);
-	customBufferDesc.MipLevels = 1;
-	customBufferDesc.ArraySize = 1;
-	customBufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-	customBufferDesc.SampleDesc.Count = 1;
-	customBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	customBufferDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+void Renderer::GetPresetTexture2d(ComPtr<ID3D11Device> D3D11Device, ComPtr<ID3D11Texture2D>& Out, TexPreset2D Preset, int texWidth, int texHeight) {
+	D3D11_TEXTURE2D_DESC desc = {};
 
-	HRESULT hr = D3D11Device->CreateTexture2D(&customBufferDesc, nullptr, customBuffer.GetAddressOf());
-	
+	desc.Width = static_cast<UINT>(texWidth);
+	desc.Height = static_cast<UINT>(texHeight);
+	desc.MipLevels = 1;
+	desc.ArraySize = 1;
+	desc.SampleDesc.Count = 1;
+	desc.SampleDesc.Quality = 0;
+
+	switch (Preset) {
+	case RenderTargetPreset:
+		desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		desc.Usage = D3D11_USAGE_DEFAULT;
+		desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+		desc.CPUAccessFlags = 0;
+		break;
+
+	case DepthStencilPreset:
+		desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		desc.Usage = D3D11_USAGE_DEFAULT;
+		desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+		desc.CPUAccessFlags = 0;
+		break;
+
+	case DynamicPreset:
+		desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		desc.Usage = D3D11_USAGE_DYNAMIC;
+		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		break;
+
+	case StagingBufferPresetCPUR:
+		desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		desc.Usage = D3D11_USAGE_STAGING;
+		desc.BindFlags = 0;
+		desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+		break;
+	case StagingBufferPresetCPUWR:
+		desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		desc.Usage = D3D11_USAGE_STAGING;
+		desc.BindFlags = 0;
+		desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		break;
+	}
+
+	HRESULT hr = D3D11Device->CreateTexture2D(&desc, nullptr, Out.GetAddressOf());
+
+ 
 }
+
 
 Renderer::Renderer() {
 
@@ -186,7 +223,7 @@ ComPtr<ID3D11PixelShader> Renderer::CreatePixelShader(ID3D11Device* D3D11Device,
 	return pixelShader;
 }
 
-ComPtr<ID3D11VertexShader> Renderer::CreateVertexShader(ID3D11Device* D3D11Device, LPCWSTR FileName) {
+ComPtr<ID3D11VertexShader> Renderer::CreateVertexShader(ID3D11Device* D3D11Device, LPCWSTR FileName, ID3DBlob** VertexShaderBlobTemp) {
 	
 
 	D3DReadFileToBlob(FileName, &VertexShaderBlobTemp);

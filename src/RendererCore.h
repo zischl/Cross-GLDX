@@ -23,6 +23,14 @@
 
 using Microsoft::WRL::ComPtr;
 
+enum TexPreset2D {
+	RenderTargetPreset,
+	DepthStencilPreset,
+	DynamicPreset,
+	StagingBufferPresetCPUR,
+	StagingBufferPresetCPUWR
+};
+
 
 struct D3DDevice {
 	ComPtr<ID3D11Device> D3D11Device = nullptr;
@@ -71,8 +79,6 @@ struct IndexBufferConfig {
 class Renderer {
 private:
 	HRESULT hr = S_OK;
-	ComPtr<ID3DBlob> VertexShaderBlobTemp = nullptr;
-	
 
 	void _createCustomBuffer(ComPtr<ID3D11Device> D3D11Device, ComPtr<ID3D11Texture2D>& customBuffer, int bufferWidth, int bufferHeight);
 
@@ -111,7 +117,7 @@ public:
 
 	ComPtr<ID3D11PixelShader> CreatePixelShader(ID3D11Device* D3D11Device, LPCWSTR FileName);
 
-	ComPtr<ID3D11VertexShader> CreateVertexShader(ID3D11Device* D3D11Device, LPCWSTR FileName);
+	ComPtr<ID3D11VertexShader> CreateVertexShader(ID3D11Device* D3D11Device, LPCWSTR FileName, ID3DBlob** VertexShaderBlobTemp);
 
 	ComPtr<ID3D11InputLayout> CreateInputLayout(ID3D11Device* D3D11Device, D3D11_INPUT_ELEMENT_DESC* layout, UINT ArraySize);
 	
