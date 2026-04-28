@@ -82,11 +82,14 @@ add_executable(BuildTest tests/BuildTest.cpp tests/WinForge.cpp)
 target_link_libraries(BuildTest PRIVATE CrossGLDX glfw)
 
 # Examples
-add_executable(SyncExample tests/SyncExample.cpp tests/WinForge.cpp)
-target_link_libraries(SyncExample PRIVATE CrossGLDX glfw)
+add_executable(WinApiSync tests/WinApiSync.cpp tests/WinForge.cpp)
+target_link_libraries(WinApiSync PRIVATE CrossGLDX glfw)
 
-add_executable(AsyncExample tests/AsyncExample.cpp tests/WinForge.cpp)
-target_link_libraries(AsyncExample PRIVATE CrossGLDX glfw)
+add_executable(WinApiAsync tests/WinApiAsync.cpp tests/WinForge.cpp)
+target_link_libraries(WinApiAsync PRIVATE CrossGLDX glfw)
+
+add_executable(GlfwWindow tests/GlfwWindow.cpp)
+target_link_libraries(GlfwWindow PRIVATE CrossGLDX glfw)
 
 # Definitions
 target_compile_definitions(CrossGLDX PUBLIC 
@@ -108,16 +111,23 @@ if(WIN32)
         VERBATIM
     )
     add_custom_command(
-        TARGET SyncExample
+        TARGET WinApiSync
         POST_BUILD
-        COMMAND cmd /C "if exist \"${NATIVE_DLL_SOURCE_DIR}\" ${CMAKE_COMMAND} -E copy_directory \"${DLL_SOURCE_DIR}\" \"$<TARGET_FILE_DIR:SyncExample>\""
+        COMMAND cmd /C "if exist \"${NATIVE_DLL_SOURCE_DIR}\" ${CMAKE_COMMAND} -E copy_directory \"${DLL_SOURCE_DIR}\" \"$<TARGET_FILE_DIR:WinApiSync>\""
         COMMENT "Copying Runtime DLLs to execution directory..."
         VERBATIM
     )
     add_custom_command(
-        TARGET AsyncExample
+        TARGET WinApiAsync
         POST_BUILD
-        COMMAND cmd /C "if exist \"${NATIVE_DLL_SOURCE_DIR}\" ${CMAKE_COMMAND} -E copy_directory \"${DLL_SOURCE_DIR}\" \"$<TARGET_FILE_DIR:AsyncExample>\""
+        COMMAND cmd /C "if exist \"${NATIVE_DLL_SOURCE_DIR}\" ${CMAKE_COMMAND} -E copy_directory \"${DLL_SOURCE_DIR}\" \"$<TARGET_FILE_DIR:WinApiAsync>\""
+        COMMENT "Copying Runtime DLLs to execution directory..."
+        VERBATIM
+    )
+    add_custom_command(
+        TARGET GlfwWindow
+        POST_BUILD
+        COMMAND cmd /C "if exist \"${NATIVE_DLL_SOURCE_DIR}\" ${CMAKE_COMMAND} -E copy_directory \"${DLL_SOURCE_DIR}\" \"$<TARGET_FILE_DIR:GlfwWindow>\""
         COMMENT "Copying Runtime DLLs to execution directory..."
         VERBATIM
     )

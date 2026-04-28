@@ -63,7 +63,7 @@ HWND WinForge::CreateWindowAsync(const wchar_t* window_name, HINSTANCE& hInstanc
 		Events = new HANDLE[1];
 		Events[0] = CreateEvent(NULL, FALSE, TRUE, L"WF_RENDER");
 
-		// D3D11 Initialization (Minimal)
+		// D3D11 Initialization
 		D3D11Device = D3DDevStruct.D3D11Device.Get();
 		D3D11Context = D3DDevStruct.D3D11Context.Get();
 		
@@ -98,7 +98,8 @@ void WinForge::MainLoop() {
 		EventDW = MsgWaitForMultipleObjectsEx(1, Events, 1, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
 
 		switch (EventDW) {
-		case WAIT_OBJECT_0 + 1: // Message in queue
+		case WAIT_OBJECT_0 + 1: 
+			// Message queue
 			while (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
 				if (msg.message == WM_QUIT)
 					return;
@@ -108,7 +109,8 @@ void WinForge::MainLoop() {
 			}
 			break;
 
-		case WAIT_OBJECT_0 + 0: // Render event
+			// Render event
+		case WAIT_OBJECT_0 + 0: 
 			Render();
 			break;
 
