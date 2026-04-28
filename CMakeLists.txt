@@ -11,6 +11,23 @@ else()
     set(ARCH x86)
 endif()
 
+
+include(FetchContent)
+
+FetchContent_Declare(
+  glfw
+  GIT_REPOSITORY https://github.com/glfw/glfw.git
+  GIT_TAG        3.4
+)
+
+# Don't need no samples
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(glfw)
+
+
 # Source Definitions
 set(COMMON_SOURCES
     src/Logger.cpp
@@ -61,8 +78,15 @@ if(WIN32)
 endif()
 
 # Build Test
-add_executable(BuildTest tests/BuildTest.cpp)
-target_link_libraries(BuildTest PRIVATE CrossGLDX)
+add_executable(BuildTest tests/BuildTest.cpp tests/WinForge.cpp)
+target_link_libraries(BuildTest PRIVATE CrossGLDX glfw)
+
+# Examples
+add_executable(SyncExample tests/SyncExample.cpp tests/WinForge.cpp)
+target_link_libraries(SyncExample PRIVATE CrossGLDX glfw)
+
+add_executable(AsyncExample tests/AsyncExample.cpp tests/WinForge.cpp)
+target_link_libraries(AsyncExample PRIVATE CrossGLDX glfw)
 
 # Definitions
 target_compile_definitions(CrossGLDX PUBLIC 
@@ -80,6 +104,20 @@ if(WIN32)
         TARGET BuildTest
         POST_BUILD
         COMMAND cmd /C "if exist \"${NATIVE_DLL_SOURCE_DIR}\" ${CMAKE_COMMAND} -E copy_directory \"${DLL_SOURCE_DIR}\" \"$<TARGET_FILE_DIR:BuildTest>\""
+        COMMENT "Copying Runtime DLLs to execution directory..."
+        VERBATIM
+    )
+    add_custom_command(
+        TARGET SyncExample
+        POST_BUILD
+        COMMAND cmd /C "if exist \"${NATIVE_DLL_SOURCE_DIR}\" ${CMAKE_COMMAND} -E copy_directory \"${DLL_SOURCE_DIR}\" \"$<TARGET_FILE_DIR:SyncExample>\""
+        COMMENT "Copying Runtime DLLs to execution directory..."
+        VERBATIM
+    )
+    add_custom_command(
+        TARGET AsyncExample
+        POST_BUILD
+        COMMAND cmd /C "if exist \"${NATIVE_DLL_SOURCE_DIR}\" ${CMAKE_COMMAND} -E copy_directory \"${DLL_SOURCE_DIR}\" \"$<TARGET_FILE_DIR:AsyncExample>\""
         COMMENT "Copying Runtime DLLs to execution directory..."
         VERBATIM
     )
