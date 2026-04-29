@@ -16,13 +16,17 @@ bool GLRenderer::Initialize() {
     return true;
 }
 
-void GLRenderer::SetViewport(int X, int Y, int Width, int Height) {
-    glViewport(X, Y, Width, Height);
+void GLRenderer::SetViewport(int x, int y, int width, int height) {
+    glViewport(x, y, width, height);
 }
 
-void GLRenderer::Clear(float R, float G, float B, float A) {
-    glClearColor(R, G, B, A);
+void GLRenderer::Clear(float r, float g, float b, float a) {
+    glClearColor(r, g, b, a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+}
+
+void GLRenderer::Present() {
+
 }
 
 GLuint GLRenderer::CreateVertexBuffer(const void* Data, size_t Size, GLenum Usage) {

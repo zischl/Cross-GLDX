@@ -30,18 +30,23 @@ FetchContent_MakeAvailable(glfw)
 
 # Source Definitions
 set(COMMON_SOURCES
-    src/Logger.cpp
-    src/Logger.h
+    src/core/Logger.cpp
+    src/core/Logger.h
+    src/core/CrossGLDX.h
+    src/window/GlfwWindow.cpp
+    src/window/GlfwWindow.h
 )
 
 set(WIN32_SOURCES
-    src/D3D11Renderer.cpp
-    src/D3D11Renderer.h
+    src/renderer/D3D11Renderer.cpp
+    src/renderer/D3D11Renderer.h
+    src/window/Win32Window.cpp
+    src/window/Win32Window.h
 )
 
 set(GL_SOURCES
-    src/GLRenderer.cpp
-    src/GLRenderer.h
+    src/renderer/GLRenderer.cpp
+    src/renderer/GLRenderer.h
     external/src/glad.c
 )
 
@@ -53,8 +58,12 @@ else()
 endif()
 
 add_library(CrossGLDX STATIC ${SOURCES})
-target_include_directories(CrossGLDX PUBLIC src)
-target_include_directories(CrossGLDX PUBLIC external/include)
+target_include_directories(CrossGLDX PUBLIC 
+    src/core
+    src/window
+    src/renderer
+    external/include
+)
 
 # Dependencies
 
@@ -77,15 +86,17 @@ if(WIN32)
     target_link_libraries(CrossGLDX PRIVATE d3d11 dxgi d3dcompiler)
 endif()
 
+target_link_libraries(CrossGLDX PUBLIC glfw)
+
 # Build Test
-add_executable(BuildTest tests/BuildTest.cpp tests/WinForge.cpp)
+add_executable(BuildTest tests/BuildTest.cpp)
 target_link_libraries(BuildTest PRIVATE CrossGLDX glfw)
 
 # Examples
-add_executable(WinApiSync tests/WinApiSync.cpp tests/WinForge.cpp)
+add_executable(WinApiSync tests/WinApiSync.cpp)
 target_link_libraries(WinApiSync PRIVATE CrossGLDX glfw)
 
-add_executable(WinApiAsync tests/WinApiAsync.cpp tests/WinForge.cpp)
+add_executable(WinApiAsync tests/WinApiAsync.cpp)
 target_link_libraries(WinApiAsync PRIVATE CrossGLDX glfw)
 
 add_executable(GlfwWindow tests/GlfwWindow.cpp)

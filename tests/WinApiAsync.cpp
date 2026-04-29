@@ -1,8 +1,11 @@
-#include "WinForge.h"
 #include "D3D11Renderer.h"
+#include "Win32Window.h"
+
 #include <iostream>
 #include <chrono>
 #include <thread>
+
+
 
 int main() {
     std::cout << "Starting Asynchronous Window Example..." << std::endl;
@@ -20,11 +23,11 @@ int main() {
         return -1;
     }
 
-    // Creating WinForge instance and launching async window
-    WinForge forge;
+    // Creating Win32AsyncWindow instance and launching async window
+    Win32AsyncWindow forge;
     
     // The window will be created in its own thread and handle its own message loop
-    HWND asyncHwnd = forge.CreateWindowAsync(L"AsyncNexusWindow", hInstance, SW_SHOW, devStruct);
+    HWND asyncHwnd = forge.CreateAsync(L"AsyncNexusWindow", hInstance, SW_SHOW, devStruct);
 
     if (asyncHwnd) {
         std::cout << "Async window initiated. Main thread is free." << std::endl;

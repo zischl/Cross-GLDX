@@ -86,6 +86,10 @@ private:
 public:
 	D3D11Renderer();
 
+	void Clear(ID3D11DeviceContext* Context, ID3D11RenderTargetView* RTV, float r, float g, float b, float a);
+	void SetViewport(ID3D11DeviceContext* Context, int x, int y, int width, int height);
+	void Present(IDXGISwapChain3* SwapChain, bool VSync);
+
 	void SetViewPort(ID3D11DeviceContext* D3D11Context);
 
 	D3DDevice CreateD3d11Device(D3D_FEATURE_LEVEL(FeatureLevels)[], UINT FeatureLevelCount, UINT& CreationFlags);
@@ -93,7 +97,7 @@ public:
 	inline void GetDeferredContext(ID3D11Device* D3D11Device, ID3D11DeviceContext* D3D11Context) {
 		hr = D3D11Device->CreateDeferredContext(0, &D3D11Context);
 		if (FAILED(hr)) {
-			OutputDebugStringA("Deferred Context Creation Failed!\n");
+			Logger::log("Deferred Context Creation Failed!");
 		}
 
 	}

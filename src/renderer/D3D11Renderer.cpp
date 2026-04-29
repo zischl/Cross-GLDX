@@ -57,10 +57,30 @@ void D3D11Renderer::GetPresetTexture2d(ComPtr<ID3D11Device> D3D11Device, ComPtr<
 }
 
 
-D3D11Renderer::D3D11Renderer() {
+D3D11Renderer::D3D11Renderer() {};
 
+void D3D11Renderer::Clear(ID3D11DeviceContext* Context, ID3D11RenderTargetView* RTV, float r, float g, float b, float a) {
+    if (!Context || !RTV) return;
+    float color[4] = { r, g, b, a };
+    Context->ClearRenderTargetView(RTV, color);
+}
 
-};
+void D3D11Renderer::SetViewport(ID3D11DeviceContext* Context, int x, int y, int width, int height) {
+    if (!Context) return;
+    D3D11_VIEWPORT vp;
+    vp.Width = (FLOAT)width;
+    vp.Height = (FLOAT)height;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    vp.TopLeftX = (FLOAT)x;
+    vp.TopLeftY = (FLOAT)y;
+    Context->RSSetViewports(1, &vp);
+}
+
+void D3D11Renderer::Present(IDXGISwapChain3* SwapChain, bool VSync) {
+    if (!SwapChain) return;
+    SwapChain->Present(VSync ? 1 : 0, VSync ? 0 : DXGI_PRESENT_ALLOW_TEARING);
+}
 
 //Device DeviceStruct = Renderer.CreateD3d11Device(featureLevels, _countof(featureLevels), creationFlags);
 D3DDevice D3D11Renderer::CreateD3d11Device(D3D_FEATURE_LEVEL (FeatureLevels)[],UINT FeatureLevelCount, UINT& CreationFlags) {
@@ -75,7 +95,7 @@ D3DDevice D3D11Renderer::CreateD3d11Device(D3D_FEATURE_LEVEL (FeatureLevels)[],U
 		FeatureLevels, FeatureLevelCount, D3D11_SDK_VERSION,
 		&DeviceStruct.D3D11Device, &SelectedFeatureLevel, &DeviceStruct.D3D11Context);
 	if (FAILED(hr)) {
-		OutputDebugString("D3D11 Device Creation Failed.\n");
+		Logger::log("D3D11 Device Creation Failed.");
 	}
 
 	return DeviceStruct;
@@ -89,12 +109,12 @@ ComPtr<IDXGIFactory2> D3D11Renderer::CreateDXGIFactory2() {
 
 	hr = CreateDXGIFactory(IID_PPV_ARGS(&factory));
 	if (FAILED(hr)) {
-		OutputDebugString("Factory Creation Failed.\n");
+		Logger::log("Factory Creation Failed.");
 	}
 
 	hr = factory->QueryInterface(__uuidof(IDXGIFactory2), (void**)&Factory2);
 	if (FAILED(hr)) {
-		OutputDebugString("Factory2 Query Failed.\n");
+		Logger::log("Factory2 Query Failed.");
 	}
 
 	return Factory2;
@@ -129,7 +149,7 @@ ComPtr<IDXGISwapChain3> D3D11Renderer::CreateSwapChain(
 
 	hr = Factory2->CreateSwapChainForHwnd(D3D11Device, hwnd, &swapchainConfig, nullptr, nullptr, &SwapChain);
 	if (FAILED(hr)) {
-		OutputDebugString("Swapchain Creation Failed.\n");
+		Logger::log("Swapchain Creation Failed.");
 	}
 	
 	SwapChain->QueryInterface(__uuidof(IDXGISwapChain3), (void**)&SwapChain3);
@@ -142,7 +162,7 @@ ComPtr<ID3D11Texture2D> D3D11Renderer::GetSwapChainBuffer(IDXGISwapChain3* SwapC
 	ComPtr<ID3D11Texture2D> mainBuffer;
 	hr = SwapChain->GetBuffer(Buffer, IID_PPV_ARGS(&mainBuffer));
 	if (FAILED(hr)) {
-		OutputDebugString("Swapchain Get Buffer Failed.\n");
+		Logger::log("Swapchain Get Buffer Failed.");
 	}
 
 	return mainBuffer;
@@ -156,7 +176,7 @@ std::vector<ComPtr<ID3D11Texture2D>> D3D11Renderer::GetSwapChainBuffersArray(IDX
 		ComPtr<ID3D11Texture2D> mainBuffer;
 		hr = SwapChain->GetBuffer(count, IID_PPV_ARGS(&mainBuffer));
 		if (FAILED(hr)) {
-			OutputDebugString("Swapchain Get Buffer Array Failed.\n");
+			Logger::log("Swapchain Get Buffer Array Failed.");
 		}
 		SCBArray.push_back(mainBuffer);
 	};
@@ -169,7 +189,7 @@ ComPtr<ID3D11RenderTargetView> D3D11Renderer::CreateRTV(ID3D11Device* D3D11Devic
 
 	hr = D3D11Device->CreateRenderTargetView(targetBuffer, nullptr, &renderTargetView);
 	if (FAILED(hr)) {
-		OutputDebugString("RTV Creation Failed. \n");
+		Logger::log("RTV Creation Failed.");
 	}
 
 	return renderTargetView;
@@ -181,20 +201,20 @@ std::vector <ComPtr<ID3D11RenderTargetView>> D3D11Renderer::CreateRTVArray(ID3D1
 	std::vector<ComPtr<ID3D11RenderTargetView>> RTVArray_cp = {};
 
 	for (int count = 0; count < Count; count++) {
-		OutputDebugString((std::to_string(count) + "\n").c_str());
+		Logger::log(std::to_string(count));
 		ComPtr<ID3D11Texture2D> Buffer;
 		ComPtr<ID3D11RenderTargetView> renderTargetView;
 		hr = SwapChain->GetBuffer(count, IID_PPV_ARGS(&Buffer));
 		if (FAILED(hr)) {
-			OutputDebugString("Swapchain Get Buffer Failed.\n");
+			Logger::log("Swapchain Get Buffer Failed.");
 		}
 
 		hr = D3D11Device->CreateRenderTargetView(Buffer.Get(), nullptr, &renderTargetView);
 		if (FAILED(hr)) {
-			OutputDebugString("RTV Creation Failed.\n");
+			Logger::log("RTV Creation Failed.");
 		}
 		else {
-			OutputDebugString("RTV Creation succeeded.\n");
+			Logger::log("RTV Creation succeeded.");
 		}
 
 		RTVArray_cp.push_back(renderTargetView);

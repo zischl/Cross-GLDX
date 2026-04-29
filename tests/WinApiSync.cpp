@@ -1,4 +1,4 @@
-#include "WinForge.h"
+#include "Win32Window.h"
 #include "D3D11Renderer.h"
 #include <iostream>
 #include <chrono>
@@ -9,13 +9,14 @@ int main() {
 
     // Seting up Events
     HANDLE Events[1];
-    Events[0] = CreateEvent(NULL, FALSE, TRUE, L"PanelRender");
+    Events[0] = CreateEvent(NULL, FALSE, TRUE, "PanelRender");
 
     // Window Configuration
     WinConfig config(L"Example Window", 1280, 720, L"WinApi Window Example", NULL);
 
     // Initializing The Window
-    HWND hwnd = WindowInit(config, hInstance, nCmdShow, WinForge::WProc2);
+    Win32Window Window;
+    HWND hwnd = Window.Create(config, hInstance, nCmdShow);
     if (!hwnd) {
         std::cerr << "Failed to create window!" << std::endl;
         return -1;

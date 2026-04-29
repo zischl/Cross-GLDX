@@ -20,6 +20,7 @@
 class Logger {
 public:
   static void log(const std::string_view text);
+  static void log(const std::wstring_view text);
 
   // Variadic template log function, it should accept any number of arguments,
   // use with ( text {}, x )

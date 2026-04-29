@@ -29,8 +29,9 @@ public:
 
     bool Initialize();
 
-    void SetViewport(int X, int Y, int Width, int Height);
-    void Clear(float R, float G, float B, float A);
+    void Clear(float r, float g, float b, float a);
+    void SetViewport(int x, int y, int width, int height);
+    void Present();
 
     GLuint CreateVertexBuffer(const void* Data, size_t Size, GLenum Usage = GL_STATIC_DRAW);
     GLuint CreateIndexBuffer(const void* Data, size_t Size, GLenum Usage = GL_STATIC_DRAW);
