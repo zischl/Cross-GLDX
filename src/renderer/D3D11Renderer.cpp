@@ -51,9 +51,7 @@ void D3D11Renderer::GetPresetTexture2d(ComPtr<ID3D11Device> D3D11Device, ComPtr<
 		break;
 	}
 
-	HRESULT hr = D3D11Device->CreateTexture2D(&desc, nullptr, Out.GetAddressOf());
-
- 
+	D3D11Device->CreateTexture2D(&desc, nullptr, Out.GetAddressOf());
 }
 
 
@@ -82,56 +80,42 @@ void D3D11Renderer::Present(IDXGISwapChain3* SwapChain, bool VSync) {
     SwapChain->Present(VSync ? 1 : 0, VSync ? 0 : DXGI_PRESENT_ALLOW_TEARING);
 }
 
-//Device DeviceStruct = Renderer.CreateD3d11Device(featureLevels, _countof(featureLevels), creationFlags);
-D3DDevice D3D11Renderer::CreateD3d11Device(D3D_FEATURE_LEVEL (FeatureLevels)[],UINT FeatureLevelCount, UINT& CreationFlags) {
-	D3DDevice DeviceStruct = {};
+HRESULT D3D11Renderer::CreateD3d11Device(D3D_FEATURE_LEVEL(FeatureLevels)[], UINT FeatureLevelCount, UINT& CreationFlags, D3DDevice* OutDevice) {
+	if (!OutDevice) return E_POINTER;
+
 	D3D_FEATURE_LEVEL SelectedFeatureLevel;
 
 #if defined(_DEBUG)
 	CreationFlags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
-	HRESULT hr = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, CreationFlags,
+	return D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, CreationFlags,
 		FeatureLevels, FeatureLevelCount, D3D11_SDK_VERSION,
-		&DeviceStruct.D3D11Device, &SelectedFeatureLevel, &DeviceStruct.D3D11Context);
-	if (FAILED(hr)) {
-		Logger::log("D3D11 Device Creation Failed.");
-	}
-
-	return DeviceStruct;
+		&OutDevice->D3D11Device, &SelectedFeatureLevel, &OutDevice->D3D11Context);
 }
 
+HRESULT D3D11Renderer::CreateDXGIFactory2(IDXGIFactory2** OutFactory) {
+	if (!OutFactory) return E_POINTER;
 
-
-ComPtr<IDXGIFactory2> D3D11Renderer::CreateDXGIFactory2() {
 	ComPtr<IDXGIFactory> factory = nullptr;
-	ComPtr<IDXGIFactory2> Factory2 = nullptr;
+	HRESULT hr = CreateDXGIFactory(IID_PPV_ARGS(&factory));
+	if (FAILED(hr)) return hr;
 
-	hr = CreateDXGIFactory(IID_PPV_ARGS(&factory));
-	if (FAILED(hr)) {
-		Logger::log("Factory Creation Failed.");
-	}
-
-	hr = factory->QueryInterface(__uuidof(IDXGIFactory2), (void**)&Factory2);
-	if (FAILED(hr)) {
-		Logger::log("Factory2 Query Failed.");
-	}
-
-	return Factory2;
+	return factory->QueryInterface(__uuidof(IDXGIFactory2), (void**)OutFactory);
 }
 
-ComPtr<IDXGISwapChain3> D3D11Renderer::CreateSwapChain(
+HRESULT D3D11Renderer::CreateSwapChain(
 		ID3D11Device* D3D11Device, 
 		HWND& hwnd, 
 		UINT Width, 
 		UINT Height, 
 		IDXGIFactory2* Factory2,
-		SwapChainConfig SwapChainConfig
+		SwapChainConfig SwapChainConfig,
+		IDXGISwapChain3** OutSwapChain
 ) {
+	if (!OutSwapChain) return E_POINTER;
 
 	ComPtr<IDXGISwapChain1> SwapChain = nullptr;
-	ComPtr<IDXGISwapChain3> SwapChain3 = nullptr;
-
 	DXGI_SWAP_CHAIN_DESC1 swapchainConfig = {};
 
 	swapchainConfig.SwapEffect = SwapChainConfig.SwapEffect;
@@ -147,157 +131,159 @@ ComPtr<IDXGISwapChain3> D3D11Renderer::CreateSwapChain(
 	swapchainConfig.SampleDesc.Quality = SwapChainConfig.SampleDesc.Quality;
 
 
-	hr = Factory2->CreateSwapChainForHwnd(D3D11Device, hwnd, &swapchainConfig, nullptr, nullptr, &SwapChain);
-	if (FAILED(hr)) {
-		Logger::log("Swapchain Creation Failed.");
-	}
+	HRESULT hr = Factory2->CreateSwapChainForHwnd(D3D11Device, hwnd, &swapchainConfig, nullptr, nullptr, &SwapChain);
+	if (FAILED(hr)) return hr;
 	
-	SwapChain->QueryInterface(__uuidof(IDXGISwapChain3), (void**)&SwapChain3);
-
-	return SwapChain3;
+	return SwapChain->QueryInterface(__uuidof(IDXGISwapChain3), (void**)OutSwapChain);
 }
 
-ComPtr<ID3D11Texture2D> D3D11Renderer::GetSwapChainBuffer(IDXGISwapChain3* SwapChain, UINT Buffer) {
+HRESULT D3D11Renderer::GetSwapChainBuffer(IDXGISwapChain3* SwapChain, UINT Buffer, ID3D11Texture2D** OutBuffer) {
+	if (!SwapChain || !OutBuffer) return E_POINTER;
+	return SwapChain->GetBuffer(Buffer, IID_PPV_ARGS(OutBuffer));
+}
 
-	ComPtr<ID3D11Texture2D> mainBuffer;
-	hr = SwapChain->GetBuffer(Buffer, IID_PPV_ARGS(&mainBuffer));
-	if (FAILED(hr)) {
-		Logger::log("Swapchain Get Buffer Failed.");
+HRESULT D3D11Renderer::GetSwapChainBuffersArray(IDXGISwapChain3* SwapChain, UINT Count, std::vector<ComPtr<ID3D11Texture2D>>& OutBuffers) {
+	if (!SwapChain) return E_POINTER;
+
+	OutBuffers.clear();
+	for (UINT i = 0; i < Count; i++) {
+		ComPtr<ID3D11Texture2D> buffer;
+		HRESULT hr = SwapChain->GetBuffer(i, IID_PPV_ARGS(&buffer));
+		if (FAILED(hr)) return hr;
+		OutBuffers.push_back(buffer);
 	}
-
-	return mainBuffer;
+	return S_OK;
 }
 
-std::vector<ComPtr<ID3D11Texture2D>> D3D11Renderer::GetSwapChainBuffersArray(IDXGISwapChain3* SwapChain, UINT Count) {
-
-	std::vector<ComPtr<ID3D11Texture2D>> SCBArray = {};
-
-	for (int count = 0; count < Count; count++) {
-		ComPtr<ID3D11Texture2D> mainBuffer;
-		hr = SwapChain->GetBuffer(count, IID_PPV_ARGS(&mainBuffer));
-		if (FAILED(hr)) {
-			Logger::log("Swapchain Get Buffer Array Failed.");
-		}
-		SCBArray.push_back(mainBuffer);
-	};
-
-	return SCBArray;
+HRESULT D3D11Renderer::CreateRTV(ID3D11Device* D3D11Device, ID3D11Texture2D* targetBuffer, ID3D11RenderTargetView** OutRTV) {
+	if (!D3D11Device || !targetBuffer || !OutRTV) return E_POINTER;
+	return D3D11Device->CreateRenderTargetView(targetBuffer, nullptr, OutRTV);
 }
 
-ComPtr<ID3D11RenderTargetView> D3D11Renderer::CreateRTV(ID3D11Device* D3D11Device, ID3D11Texture2D* targetBuffer) {
-	ComPtr<ID3D11RenderTargetView> renderTargetView = nullptr;
+HRESULT D3D11Renderer::CreateRTVArray(ID3D11Device* D3D11Device, IDXGISwapChain3* SwapChain, UINT Count, std::vector<ComPtr<ID3D11RenderTargetView>>& OutRTVArray) {
+	if (!D3D11Device || !SwapChain) return E_POINTER;
 
-	hr = D3D11Device->CreateRenderTargetView(targetBuffer, nullptr, &renderTargetView);
-	if (FAILED(hr)) {
-		Logger::log("RTV Creation Failed.");
+	OutRTVArray.clear();
+	for (UINT i = 0; i < Count; i++) {
+		ComPtr<ID3D11Texture2D> buffer;
+		HRESULT hr = SwapChain->GetBuffer(i, IID_PPV_ARGS(&buffer));
+		if (FAILED(hr)) return hr;
+
+		ComPtr<ID3D11RenderTargetView> rtv;
+		hr = D3D11Device->CreateRenderTargetView(buffer.Get(), nullptr, &rtv);
+		if (FAILED(hr)) return hr;
+
+		OutRTVArray.push_back(rtv);
 	}
-
-	return renderTargetView;
+	return S_OK;
 }
 
-//not for dx 11
-std::vector <ComPtr<ID3D11RenderTargetView>> D3D11Renderer::CreateRTVArray(ID3D11Device* D3D11Device, IDXGISwapChain3* SwapChain, UINT Count) {
+HRESULT D3D11Renderer::CreatePixelShader(ID3D11Device* D3D11Device, LPCWSTR FileName, ID3D11PixelShader** OutShader) {
+	if (!D3D11Device || !OutShader) return E_POINTER;
 
-	std::vector<ComPtr<ID3D11RenderTargetView>> RTVArray_cp = {};
-
-	for (int count = 0; count < Count; count++) {
-		Logger::log(std::to_string(count));
-		ComPtr<ID3D11Texture2D> Buffer;
-		ComPtr<ID3D11RenderTargetView> renderTargetView;
-		hr = SwapChain->GetBuffer(count, IID_PPV_ARGS(&Buffer));
-		if (FAILED(hr)) {
-			Logger::log("Swapchain Get Buffer Failed.");
-		}
-
-		hr = D3D11Device->CreateRenderTargetView(Buffer.Get(), nullptr, &renderTargetView);
-		if (FAILED(hr)) {
-			Logger::log("RTV Creation Failed.");
-		}
-		else {
-			Logger::log("RTV Creation succeeded.");
-		}
-
-		RTVArray_cp.push_back(renderTargetView);
-	};
-
-	return RTVArray_cp;
-}
-
-
-
-ComPtr<ID3D11PixelShader> D3D11Renderer::CreatePixelShader(ID3D11Device* D3D11Device, LPCWSTR FileName) {
-	
 	ComPtr<ID3DBlob> pixelShaderBlob = nullptr;
-	hr = D3DReadFileToBlob(FileName, &pixelShaderBlob);
-	if (hr != S_OK) {
-		Logger::log("Failed to read pixel shader file to blob");
-	}
+	HRESULT hr = D3DReadFileToBlob(FileName, &pixelShaderBlob);
+	if (FAILED(hr)) return hr;
 
-	ComPtr<ID3D11PixelShader> pixelShader;
-
-	D3D11Device->CreatePixelShader(
+	return D3D11Device->CreatePixelShader(
 		pixelShaderBlob->GetBufferPointer(),
 		pixelShaderBlob->GetBufferSize(),
-		nullptr, &pixelShader);
-
-	return pixelShader;
+		nullptr, OutShader);
 }
 
-ComPtr<ID3D11VertexShader> D3D11Renderer::CreateVertexShader(ID3D11Device* D3D11Device, LPCWSTR FileName, ID3DBlob** VertexShaderBlobTempParam) {
+HRESULT D3D11Renderer::CreateVertexShader(ID3D11Device* D3D11Device, LPCWSTR FileName, ID3D11VertexShader** OutShader, ID3DBlob** OutBlob) {
+	if (!D3D11Device || !OutShader) return E_POINTER;
 	
-	D3DReadFileToBlob(FileName, &VertexShaderBlobTemp);
+	ComPtr<ID3DBlob> vertexShaderBlob;
+	HRESULT hr = D3DReadFileToBlob(FileName, &vertexShaderBlob);
+	if (FAILED(hr)) return hr;
 
-	ComPtr<ID3D11VertexShader> vertexShader;
+	hr = D3D11Device->CreateVertexShader(
+		vertexShaderBlob->GetBufferPointer(),
+		vertexShaderBlob->GetBufferSize(),
+		nullptr, OutShader);
+	if (FAILED(hr)) return hr;
 
-	D3D11Device->CreateVertexShader(
-		VertexShaderBlobTemp->GetBufferPointer(),
-		VertexShaderBlobTemp->GetBufferSize(),
-		nullptr, &vertexShader);
-
-	if (VertexShaderBlobTempParam) {
-		*VertexShaderBlobTempParam = VertexShaderBlobTemp.Get();
-		VertexShaderBlobTemp->AddRef();
+	if (OutBlob) {
+		*OutBlob = vertexShaderBlob.Detach();
 	}
 
-	return vertexShader;
+	return S_OK;
 }
 
-ComPtr<ID3D11InputLayout> D3D11Renderer::CreateInputLayout(ID3D11Device* D3D11Device, D3D11_INPUT_ELEMENT_DESC* layout, UINT ArraySize) {
+HRESULT D3D11Renderer::CreateInputLayout(ID3D11Device* D3D11Device, D3D11_INPUT_ELEMENT_DESC* layout, UINT ArraySize, ID3DBlob* VertexShaderBlob, ID3D11InputLayout** OutLayout) {
+	if (!D3D11Device || !VertexShaderBlob || !OutLayout) return E_POINTER;
 
-	ComPtr<ID3D11InputLayout> inputLayout;
+	return D3D11Device->CreateInputLayout(layout, ArraySize, VertexShaderBlob->GetBufferPointer(),
+			VertexShaderBlob->GetBufferSize(), OutLayout);
+}
 
-	if (VertexShaderBlobTemp) {
-		D3D11Device->CreateInputLayout(layout, ArraySize, VertexShaderBlobTemp->GetBufferPointer(),
-			VertexShaderBlobTemp->GetBufferSize(), &inputLayout);
+HRESULT D3D11Renderer::CreateIndexBuffer(ID3D11Device* D3D11Device, const void* Indices, UINT ByteWidth, ID3D11Buffer** OutBuffer, IndexBufferConfig BufferConfig) {
+	if (!D3D11Device || !OutBuffer) return E_POINTER;
+
+	D3D11_BUFFER_DESC desc = {};
+	desc.ByteWidth = ByteWidth;
+	desc.Usage = BufferConfig.Usage;
+	desc.BindFlags = BufferConfig.BindFlags;
+	desc.CPUAccessFlags = BufferConfig.CPUAccessFlags;
+	desc.MiscFlags = BufferConfig.MiscFlags;
+	desc.StructureByteStride = BufferConfig.StructureByteStride;
+
+	D3D11_SUBRESOURCE_DATA initData = {};
+	initData.pSysMem = Indices;
+	initData.SysMemPitch = BufferConfig.SysMemPitch;
+	initData.SysMemSlicePitch = BufferConfig.SysMemSlicePitch;
+	
+	return D3D11Device->CreateBuffer(&desc, &initData, OutBuffer);
+}
+
+HRESULT D3D11Renderer::CreateConstantBuffer(ID3D11Device* D3D11Device, const void* Data, UINT ByteWidth, ID3D11Buffer** OutBuffer, ConstantBufferConfig BufferConfig) {
+	if (!D3D11Device || !OutBuffer) return E_POINTER;
+
+	D3D11_BUFFER_DESC desc = {};
+	desc.ByteWidth = ByteWidth;
+	desc.Usage = BufferConfig.Usage;
+	desc.BindFlags = BufferConfig.BindFlags;
+	desc.CPUAccessFlags = BufferConfig.CPUAccessFlags;
+	desc.MiscFlags = BufferConfig.MiscFlags;
+	desc.StructureByteStride = BufferConfig.StructureByteStride;
+
+	if (Data) {
+		D3D11_SUBRESOURCE_DATA initData = {};
+		initData.pSysMem = Data;
+		initData.SysMemPitch = BufferConfig.SysMemPitch;
+		initData.SysMemSlicePitch = BufferConfig.SysMemSlicePitch;
+		return D3D11Device->CreateBuffer(&desc, &initData, OutBuffer);
+	} else {
+		return D3D11Device->CreateBuffer(&desc, nullptr, OutBuffer);
 	}
-
-	return inputLayout;
 }
 
-
-ComPtr<ID3D11Buffer> D3D11Renderer::CreateIndexBuffer(ID3D11Device* D3D11Device, const unsigned short(&Indices)[], UINT ArraySize, IndexBufferConfig BufferConfig) {
-	
-	D3D11_BUFFER_DESC indexBufferDesc;
-	indexBufferDesc.ByteWidth = sizeof(unsigned short) * ArraySize;
-	indexBufferDesc.Usage = BufferConfig.Usage;
-	indexBufferDesc.BindFlags = BufferConfig.BindFlags;
-	indexBufferDesc.CPUAccessFlags = BufferConfig.CPUAccessFlags;
-	indexBufferDesc.MiscFlags = BufferConfig.MiscFlags;
-	indexBufferDesc.StructureByteStride = BufferConfig.StructureByteStride;
-
-	D3D11_SUBRESOURCE_DATA indexBufferData;
-	indexBufferData.pSysMem = Indices;
-	indexBufferData.SysMemPitch = BufferConfig.SysMemPitch;
-	indexBufferData.SysMemSlicePitch = BufferConfig.SysMemSlicePitch;
-	
-	ComPtr<ID3D11Buffer> indexBuffer;
-	D3D11Device->CreateBuffer(&indexBufferDesc, &indexBufferData, &indexBuffer);
-
-	return indexBuffer;
+HRESULT D3D11Renderer::CreateTexture2D(ID3D11Device* D3D11Device, const D3D11_TEXTURE2D_DESC* Desc, const D3D11_SUBRESOURCE_DATA* InitialData, ID3D11Texture2D** OutTexture) {
+	if (!D3D11Device || !Desc || !OutTexture) return E_POINTER;
+	return D3D11Device->CreateTexture2D(Desc, InitialData, OutTexture);
 }
 
+HRESULT D3D11Renderer::CreateSamplerState(ID3D11Device* D3D11Device, const D3D11_SAMPLER_DESC* Desc, ID3D11SamplerState** OutSampler) {
+	if (!D3D11Device || !Desc || !OutSampler) return E_POINTER;
+	return D3D11Device->CreateSamplerState(Desc, OutSampler);
+}
 
+HRESULT D3D11Renderer::CreateRasterizerState(ID3D11Device* D3D11Device, const D3D11_RASTERIZER_DESC* Desc, ID3D11RasterizerState** OutState) {
+	if (!D3D11Device || !Desc || !OutState) return E_POINTER;
+	return D3D11Device->CreateRasterizerState(Desc, OutState);
+}
+
+HRESULT D3D11Renderer::CreateBlendState(ID3D11Device* D3D11Device, const D3D11_BLEND_DESC* Desc, ID3D11BlendState** OutState) {
+	if (!D3D11Device || !Desc || !OutState) return E_POINTER;
+	return D3D11Device->CreateBlendState(Desc, OutState);
+}
+
+HRESULT D3D11Renderer::CreateDepthStencilState(ID3D11Device* D3D11Device, const D3D11_DEPTH_STENCIL_DESC* Desc, ID3D11DepthStencilState** OutState) {
+	if (!D3D11Device || !Desc || !OutState) return E_POINTER;
+	return D3D11Device->CreateDepthStencilState(Desc, OutState);
+}
 
 void D3D11Renderer::SetViewPort(ID3D11DeviceContext* D3D11Context) {
 	
-}
+}

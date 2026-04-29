@@ -43,6 +43,13 @@ GLuint GLRenderer::CreateIndexBuffer(const void* Data, size_t Size, GLenum Usage
     return Buffer;
 }
 
+GLuint GLRenderer::CreateUniformBuffer(const void* Data, size_t Size, GLenum Usage) {
+    GLuint Buffer;
+    glCreateBuffers(1, &Buffer);
+    glNamedBufferStorage(Buffer, Size, Data, GL_DYNAMIC_STORAGE_BIT);
+    return Buffer;
+}
+
 GLuint GLRenderer::CreateVertexShader(const char* Source) {
     GLuint Shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(Shader, 1, &Source, nullptr);
@@ -93,8 +100,6 @@ GLuint GLRenderer::CreateTexture2D(int Width, int Height, GLTexPreset2D Preset) 
     glCreateTextures(GL_TEXTURE_2D, 1, &Texture);
 
     GLenum InternalFormat = GL_RGBA8;
-    GLenum Format = GL_RGBA;
-    GLenum Type = GL_UNSIGNED_BYTE;
 
     switch (Preset) {
     case GL_RenderTargetPreset:
@@ -136,6 +141,37 @@ GLuint GLRenderer::CreateFramebuffer(GLuint ColorAttachment, GLuint DepthAttachm
     }
 
     return Fbo;
+}
+
+void GLRenderer::SetRasterizerState(const GLRasterizerState& State) {
+    glPolygonMode(GL_FRONT_AND_BACK, State.FillMode);
+    if (State.CullMode == 0) {
+        glDisable(GL_CULL_FACE);
+    } else {
+        glEnable(GL_CULL_FACE);
+        glCullFace(State.CullMode);
+    }
+    if (State.ScissorEnable) glEnable(GL_SCISSOR_TEST); else glDisable(GL_SCISSOR_TEST);
+}
+
+void GLRenderer::SetBlendState(const GLBlendState& State) {
+    if (State.BlendEnable) {
+        glEnable(GL_BLEND);
+        glBlendFunc(State.SrcBlend, State.DestBlend);
+        glBlendEquation(State.BlendOp);
+    } else {
+        glDisable(GL_BLEND);
+    }
+}
+
+void GLRenderer::SetDepthStencilState(const GLDepthStencilState& State) {
+    if (State.DepthEnable) {
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(State.DepthFunc);
+        glDepthMask(State.DepthWriteMask);
+    } else {
+        glDisable(GL_DEPTH_TEST);
+    }
 }
 
 std::string GLRenderer::ReadFile(const std::string& FilePath) {

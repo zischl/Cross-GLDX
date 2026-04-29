@@ -72,6 +72,16 @@ struct IndexBufferConfig {
 	UINT SysMemSlicePitch = 0;
 };
 
+struct ConstantBufferConfig {
+	D3D11_USAGE Usage = D3D11_USAGE_DEFAULT;
+	UINT BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	UINT CPUAccessFlags = 0;
+	UINT MiscFlags = 0;
+	UINT StructureByteStride = 0;
+	UINT SysMemPitch = 0;
+	UINT SysMemSlicePitch = 0;
+};
+
 
 
 
@@ -79,7 +89,6 @@ struct IndexBufferConfig {
 class D3D11Renderer {
 private:
 	HRESULT hr = S_OK;
-	ComPtr<ID3DBlob> VertexShaderBlobTemp = nullptr;
 
 	void GetPresetTexture2d(ComPtr<ID3D11Device> D3D11Device, ComPtr<ID3D11Texture2D>& Out, TexPreset2D Preset, int bufferWidth, int bufferHeight);
 
@@ -92,45 +101,44 @@ public:
 
 	void SetViewPort(ID3D11DeviceContext* D3D11Context);
 
-	D3DDevice CreateD3d11Device(D3D_FEATURE_LEVEL(FeatureLevels)[], UINT FeatureLevelCount, UINT& CreationFlags);
+	HRESULT CreateD3d11Device(D3D_FEATURE_LEVEL(FeatureLevels)[], UINT FeatureLevelCount, UINT& CreationFlags, D3DDevice* OutDevice);
 
-	inline void GetDeferredContext(ID3D11Device* D3D11Device, ID3D11DeviceContext* D3D11Context) {
-		hr = D3D11Device->CreateDeferredContext(0, &D3D11Context);
-		if (FAILED(hr)) {
-			Logger::log("Deferred Context Creation Failed!");
-		}
-
+	inline HRESULT GetDeferredContext(ID3D11Device* D3D11Device, ID3D11DeviceContext** D3D11Context) {
+		return D3D11Device->CreateDeferredContext(0, D3D11Context);
 	}
-	ComPtr<IDXGIFactory2> CreateDXGIFactory2();
 
-	ComPtr<IDXGISwapChain3> CreateSwapChain(
+	HRESULT CreateDXGIFactory2(IDXGIFactory2** OutFactory);
+
+	HRESULT CreateSwapChain(
 		ID3D11Device* D3D11Device,
 		HWND& hwnd,
 		UINT Width,
 		UINT Height,
 		IDXGIFactory2* Factory2,
-		SwapChainConfig SwapChainConfig = {}
+		SwapChainConfig SwapChainConfig,
+		IDXGISwapChain3** OutSwapChain
 	);
 
-	ComPtr<ID3D11Texture2D> GetSwapChainBuffer(IDXGISwapChain3 * SwapChain, UINT Buffer = 0);
+	HRESULT GetSwapChainBuffer(IDXGISwapChain3* SwapChain, UINT Buffer, ID3D11Texture2D** OutBuffer);
 
-	std::vector<ComPtr<ID3D11Texture2D>> GetSwapChainBuffersArray(IDXGISwapChain3* SwapChain, UINT Count);
+	HRESULT GetSwapChainBuffersArray(IDXGISwapChain3* SwapChain, UINT Count, std::vector<ComPtr<ID3D11Texture2D>>& OutBuffers);
 
-	ComPtr<ID3D11RenderTargetView> CreateRTV(ID3D11Device* D3D11Device, ID3D11Texture2D* targetBuffer);
+	HRESULT CreateRTV(ID3D11Device* D3D11Device, ID3D11Texture2D* targetBuffer, ID3D11RenderTargetView** OutRTV);
 
-	std::vector <ComPtr<ID3D11RenderTargetView>> CreateRTVArray(ID3D11Device* D3D11Device, IDXGISwapChain3* SwapChain, UINT Count);
+	HRESULT CreateRTVArray(ID3D11Device* D3D11Device, IDXGISwapChain3* SwapChain, UINT Count, std::vector<ComPtr<ID3D11RenderTargetView>>& OutRTVArray);
 
-	ComPtr<ID3D11PixelShader> CreatePixelShader(ID3D11Device* D3D11Device, LPCWSTR FileName);
+	HRESULT CreatePixelShader(ID3D11Device* D3D11Device, LPCWSTR FileName, ID3D11PixelShader** OutShader);
 
-	ComPtr<ID3D11VertexShader> CreateVertexShader(ID3D11Device* D3D11Device, LPCWSTR FileName, ID3DBlob** VertexShaderBlobTemp);
+	HRESULT CreateVertexShader(ID3D11Device* D3D11Device, LPCWSTR FileName, ID3D11VertexShader** OutShader, ID3DBlob** OutBlob);
 
-	ComPtr<ID3D11InputLayout> CreateInputLayout(ID3D11Device* D3D11Device, D3D11_INPUT_ELEMENT_DESC* layout, UINT ArraySize);
-	
-	template <typename VertexStruct, size_t size> 
-	ComPtr<ID3D11Buffer> CreateVertexBuffer(
-			ID3D11Device* D3D11Device, 
-			VertexStruct(&Vertices)[size], 
-			VertexBufferConfig BufferConfig = {}
+	HRESULT CreateInputLayout(ID3D11Device* D3D11Device, D3D11_INPUT_ELEMENT_DESC* layout, UINT ArraySize, ID3DBlob* VertexShaderBlob, ID3D11InputLayout** OutLayout);
+
+	template <typename VertexStruct, size_t size>
+	HRESULT CreateVertexBuffer(
+		ID3D11Device* D3D11Device,
+		VertexStruct(&Vertices)[size],
+		ID3D11Buffer** OutBuffer,
+		VertexBufferConfig BufferConfig = {}
 	) {
 
 		D3D11_BUFFER_DESC VertexBufferDesc = {
@@ -144,13 +152,22 @@ public:
 
 		D3D11_SUBRESOURCE_DATA initBufferData = { Vertices, 0, 0 };
 
-		ComPtr<ID3D11Buffer> vertexBuffer;
-		D3D11Device->CreateBuffer(&VertexBufferDesc, &initBufferData, &vertexBuffer);
-
-		return vertexBuffer;
+		return D3D11Device->CreateBuffer(&VertexBufferDesc, &initBufferData, OutBuffer);
 	};
-	
-	ComPtr<ID3D11Buffer> CreateIndexBuffer(ID3D11Device* D3D11Device, const unsigned short (&Indices)[], UINT ArraySize, IndexBufferConfig BufferConfig = {});
+
+	HRESULT CreateIndexBuffer(ID3D11Device* D3D11Device, const void* Indices, UINT ByteWidth, ID3D11Buffer** OutBuffer, IndexBufferConfig BufferConfig = {});
+
+	HRESULT CreateConstantBuffer(ID3D11Device* D3D11Device, const void* Data, UINT ByteWidth, ID3D11Buffer** OutBuffer, ConstantBufferConfig BufferConfig = {});
+
+	HRESULT CreateTexture2D(ID3D11Device* D3D11Device, const D3D11_TEXTURE2D_DESC* Desc, const D3D11_SUBRESOURCE_DATA* InitialData, ID3D11Texture2D** OutTexture);
+
+	HRESULT CreateSamplerState(ID3D11Device* D3D11Device, const D3D11_SAMPLER_DESC* Desc, ID3D11SamplerState** OutSampler);
+
+	HRESULT CreateRasterizerState(ID3D11Device* D3D11Device, const D3D11_RASTERIZER_DESC* Desc, ID3D11RasterizerState** OutState);
+
+	HRESULT CreateBlendState(ID3D11Device* D3D11Device, const D3D11_BLEND_DESC* Desc, ID3D11BlendState** OutState);
+
+	HRESULT CreateDepthStencilState(ID3D11Device* D3D11Device, const D3D11_DEPTH_STENCIL_DESC* Desc, ID3D11DepthStencilState** OutState);
 
 	
 	

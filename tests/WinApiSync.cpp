@@ -30,20 +30,26 @@ int main() {
     D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0 };
     UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
-    D3DDevice devStruct = Renderer.CreateD3d11Device(featureLevels, _countof(featureLevels), creationFlags);
-    ID3D11Device* D3D11Device = devStruct.D3D11Device.Get();
-    ID3D11DeviceContext* D3D11Context = devStruct.D3D11Context.Get();
-
-    if (!D3D11Device) {
+    D3DDevice devStruct;
+    if (FAILED(Renderer.CreateD3d11Device(featureLevels, _countof(featureLevels), creationFlags, &devStruct))) {
         std::cerr << "Failed to create D3D11 Device!" << std::endl;
         return -1;
     }
+    ID3D11Device* D3D11Device = devStruct.D3D11Device.Get();
+    ID3D11DeviceContext* D3D11Context = devStruct.D3D11Context.Get();
 
     // Setup for SwapChain and RTV
-    auto factory = Renderer.CreateDXGIFactory2();
-    auto swapchain = Renderer.CreateSwapChain(D3D11Device, hwnd, 1280, 810, factory.Get());
-    auto backBuffer = Renderer.GetSwapChainBuffer(swapchain.Get());
-    auto renderTargetView = Renderer.CreateRTV(D3D11Device, backBuffer.Get());
+    ComPtr<IDXGIFactory2> factory;
+    Renderer.CreateDXGIFactory2(&factory);
+
+    ComPtr<IDXGISwapChain3> swapchain;
+    Renderer.CreateSwapChain(D3D11Device, hwnd, 1280, 810, factory.Get(), {}, &swapchain);
+
+    ComPtr<ID3D11Texture2D> backBuffer;
+    Renderer.GetSwapChainBuffer(swapchain.Get(), 0, &backBuffer);
+
+    ComPtr<ID3D11RenderTargetView> renderTargetView;
+    Renderer.CreateRTV(D3D11Device, backBuffer.Get(), &renderTargetView);
 
     // Main Loop
     MSG msg = {};

@@ -4,6 +4,7 @@
 #pragma once
 
 #include "Logger.h"
+#include "RendererTypes.h"
 #include "GLRenderer.h"
 #include "GlfwWindow.h"
 
@@ -19,11 +20,13 @@ namespace CrossGLDX {
     using Window = Win32Window;
     using AsyncWindow = Win32AsyncWindow;
     using Renderer = D3D11Renderer;
+    using Buffer = D3D11Buffer;
 
 #else
     // Default to Cross-Platform paths
     using Window = GlfwWindow;
     using Renderer = GLRenderer;
+    using Buffer = GLBuffer;
 #endif
 
     inline void PrintVersion() {

@@ -9,7 +9,6 @@ int main() {
 #ifdef _WIN32
     std::cout << "Testing Win32Window..." << std::endl;
     WinConfig config(L"TestClass", 800, 600, L"Build Test Window", NULL);
-    // Use the alias from CrossGLDX.h
     CrossGLDX::Window window;
     HWND syncHwnd = window.Create(config, GetModuleHandle(NULL), SW_HIDE);
     if (syncHwnd) {

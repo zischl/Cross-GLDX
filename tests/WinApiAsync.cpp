@@ -16,9 +16,8 @@ int main() {
     D3D11Renderer Renderer;
     D3D_FEATURE_LEVEL featureLevels[] = { D3D_FEATURE_LEVEL_11_1, D3D_FEATURE_LEVEL_11_0 };
     UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-    D3DDevice devStruct = Renderer.CreateD3d11Device(featureLevels, _countof(featureLevels), creationFlags);
-
-    if (!devStruct.D3D11Device) {
+    D3DDevice devStruct;
+    if (FAILED(Renderer.CreateD3d11Device(featureLevels, _countof(featureLevels), creationFlags, &devStruct))) {
         std::cerr << "Failed to create D3D11 Device!" << std::endl;
         return -1;
     }
