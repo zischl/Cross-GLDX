@@ -8,19 +8,34 @@ namespace CrossGLDX {
 
     
     /// Lightweight opaque handle used to reference a GPU buffer resource
-    struct BufferHandle { uint32_t idx; };
+    struct BufferHandle { 
+        uint32_t idx;
+        uint32_t generation;
+    };
 
     /// Lightweight opaque handle used to reference a compiled GPU shader
-    struct ShaderHandle { uint32_t idx; };
+    struct ShaderHandle { 
+        uint32_t idx;
+        uint32_t generation;
+    };
 
     /// Lightweight opaque handle used to reference a GPU texture resource
-    struct TextureHandle { uint32_t idx; };
+    struct TextureHandle { 
+        uint32_t idx; 
+        uint32_t generation;
+    };
 
     /// Lightweight opaque handle used to reference a pipeline state object which encapsulates shaders and render state configuration.
-    struct PipelineHandle { uint32_t idx; };
+    struct PipelineHandle { 
+        uint32_t idx;
+        uint32_t generation;
+    };
 
     /// Lightweight opaque handle used to reference a sampler state object
-    struct SamplerHandle { uint32_t idx; };
+    struct SamplerHandle { 
+        uint32_t idx;
+        uint32_t generation;
+    };
 
 
     // Compile time constant symbols for invalid states of all handles.
