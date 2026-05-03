@@ -10,6 +10,10 @@ template <typename T> struct Handle {
   uint32_t idx = 0xFFFFFFFF;
   uint32_t generation = 0;
 
+  constexpr Handle() = default;
+
+  constexpr Handle(uint32_t i, uint32_t g) : idx(i), generation(g) {}
+
   bool empty() const { return idx != 0xFFFFFFFF; }
 
   bool operator==(const Handle &other) const { return idx == other.idx; }
@@ -36,15 +40,15 @@ using PipelineHandle = Handle<PipelineTag>;
 using SamplerHandle = Handle<SamplerTag>;
 
 // Compile time constant symbols for invalid states of all handles.
-constexpr BufferHandle INVALID_BUFFER = {0xFFFFFFFF};
+constexpr BufferHandle INVALID_BUFFER = {0xFFFFFFFF, 0};
 // Compile time constant symbols for invalid states of all handles.
-constexpr ShaderHandle INVALID_SHADER = {0xFFFFFFFF};
+constexpr ShaderHandle INVALID_SHADER = {0xFFFFFFFF, 0};
 // Compile time constant symbols for invalid states of all handles.
-constexpr TextureHandle INVALID_TEXTURE = {0xFFFFFFFF};
+constexpr TextureHandle INVALID_TEXTURE = {0xFFFFFFFF, 0};
 // Compile time constant symbols for invalid states of all handles.
-constexpr PipelineHandle INVALID_PIPELINE = {0xFFFFFFFF};
+constexpr PipelineHandle INVALID_PIPELINE = {0xFFFFFFFF, 0};
 // Compile time constant symbols for invalid states of all handles.
-constexpr SamplerHandle INVALID_SAMPLER = {0xFFFFFFFF};
+constexpr SamplerHandle INVALID_SAMPLER = {0xFFFFFFFF, 0};
 
 } // namespace CrossGLDX
 

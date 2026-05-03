@@ -7,12 +7,12 @@
 
 namespace CrossGLDX {
 
-struct Handle {
-  uint32_t idx;
-  uint32_t generation;
-};
-
 template <typename ResourceType, uint32_t PoolSize> struct ResourcePool {
+
+  struct Handle {
+    uint32_t idx;
+    uint32_t generation;
+  };
 
   struct Slot {
     ResourceType resource = {};
