@@ -6,70 +6,46 @@
 
 namespace CrossGLDX {
 
-    
-    /// Lightweight opaque handle used to reference a GPU buffer resource
-    struct BufferHandle { 
-        uint32_t idx;
-        uint32_t generation;
-    };
+template <typename T> struct Handle {
+  uint32_t idx = 0xFFFFFFFF;
+  uint32_t generation = 0;
 
-    /// Lightweight opaque handle used to reference a compiled GPU shader
-    struct ShaderHandle { 
-        uint32_t idx;
-        uint32_t generation;
-    };
+  bool empty() const { return idx != 0xFFFFFFFF; }
 
-    /// Lightweight opaque handle used to reference a GPU texture resource
-    struct TextureHandle { 
-        uint32_t idx; 
-        uint32_t generation;
-    };
+  bool operator==(const Handle &other) const { return idx == other.idx; }
 
-    /// Lightweight opaque handle used to reference a pipeline state object which encapsulates shaders and render state configuration.
-    struct PipelineHandle { 
-        uint32_t idx;
-        uint32_t generation;
-    };
+  bool operator!=(const Handle &other) const { return idx != other.idx; }
+};
 
-    /// Lightweight opaque handle used to reference a sampler state object
-    struct SamplerHandle { 
-        uint32_t idx;
-        uint32_t generation;
-    };
+struct BufferTag {};
+struct ShaderTag {};
+struct TextureTag {};
+struct PipelineTag {};
+struct SamplerTag {};
 
+// Lightweight opaque handle used to reference a GPU buffer resource
+using BufferHandle = Handle<BufferTag>;
+// Lightweight opaque handle used to reference a compiled GPU shader
+using ShaderHandle = Handle<ShaderTag>;
+// Lightweight opaque handle used to reference a GPU texture resource
+using TextureHandle = Handle<TextureTag>;
+// Lightweight opaque handle used to reference a GPU pipeline state object which
+// encapsulates shaders and render state configuration.
+using PipelineHandle = Handle<PipelineTag>;
+// Lightweight opaque handle used to reference a sampler state object
+using SamplerHandle = Handle<SamplerTag>;
 
-    // Compile time constant symbols for invalid states of all handles.
-    constexpr BufferHandle   INVALID_BUFFER   = { 0xFFFFFFFF };
-    // Compile time constant symbols for invalid states of all handles.
-    constexpr ShaderHandle   INVALID_SHADER   = { 0xFFFFFFFF };
-    // Compile time constant symbols for invalid states of all handles.
-    constexpr TextureHandle  INVALID_TEXTURE  = { 0xFFFFFFFF };
-    // Compile time constant symbols for invalid states of all handles.
-    constexpr PipelineHandle INVALID_PIPELINE = { 0xFFFFFFFF };
-    // Compile time constant symbols for invalid states of all handles.
-    constexpr SamplerHandle  INVALID_SAMPLER  = { 0xFFFFFFFF };
+// Compile time constant symbols for invalid states of all handles.
+constexpr BufferHandle INVALID_BUFFER = {0xFFFFFFFF};
+// Compile time constant symbols for invalid states of all handles.
+constexpr ShaderHandle INVALID_SHADER = {0xFFFFFFFF};
+// Compile time constant symbols for invalid states of all handles.
+constexpr TextureHandle INVALID_TEXTURE = {0xFFFFFFFF};
+// Compile time constant symbols for invalid states of all handles.
+constexpr PipelineHandle INVALID_PIPELINE = {0xFFFFFFFF};
+// Compile time constant symbols for invalid states of all handles.
+constexpr SamplerHandle INVALID_SAMPLER = {0xFFFFFFFF};
 
-
-    // Compares two texture handles based on the operator for either equality or inequality.
-    inline bool operator==(BufferHandle a, BufferHandle b) { return a.idx == b.idx; }
-    // Compares two texture handles based on the operator for either equality or inequality.
-    inline bool operator!=(BufferHandle a, BufferHandle b) { return a.idx != b.idx; }
-
-    // Compares two texture handles based on the operator for either equality or inequality.
-    inline bool operator==(ShaderHandle a, ShaderHandle b) { return a.idx == b.idx; }
-    // Compares two texture handles based on the operator for either equality or inequality.
-    inline bool operator!=(ShaderHandle a, ShaderHandle b) { return a.idx != b.idx; }
-
-    // Compares two texture handles based on the operator for either equality or inequality.
-    inline bool operator==(TextureHandle a, TextureHandle b) { return a.idx == b.idx; }
-    // Compares two texture handles based on the operator for either equality or inequality.
-    inline bool operator!=(TextureHandle a, TextureHandle b) { return a.idx != b.idx; }
-
-    // Compares two texture handles based on the operator for either equality or inequality.
-    inline bool operator==(PipelineHandle a, PipelineHandle b) { return a.idx == b.idx; }
-    // Compares two texture handles based on the operator for either equality or inequality.
-    inline bool operator!=(PipelineHandle a, PipelineHandle b) { return a.idx != b.idx; }
-
-}
+} // namespace CrossGLDX
 
 #endif

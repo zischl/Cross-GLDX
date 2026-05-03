@@ -5,6 +5,7 @@
 
 #include <comdef.h>
 #include <string>
+#include <string_view>
 #include <winerror.h>
 
 #include <ctime>
